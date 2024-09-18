@@ -1,23 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
-// Import images
-// import threeDotMenu from '/assets/menu.svg';
-// import addIcon from './assets/add.svg';
-// import backlogIcon from './assets/Backlog.svg';
-// import cancelledIcon from './assets/Cancelled.svg';
-// import displayIcon from './assets/Display.svg';
-// import doneIcon from './assets/Done.svg';
-// import downIcon from './assets/Down.svg';
-// import highPriorityIcon from './assets/Img - High Priority.svg';
-// import lowPriorityIcon from './assets/Img - Low Priority.svg';
-// import mediumPriorityIcon from './assets/Img - Medium Priority.svg';
-// import inProgressIcon from './assets/in-progress.svg';
-// import noPriorityIcon from './assets/No-priority.svg';
-// import urgentPriorityColorIcon from './assets/UrgentPriorityColour.svg';
-// import urgentPriorityGreyIcon from './assets/UrgentPriorityGrey.svg';
-// import todoIcon from './assets/ToDo.svg';
-
 const API_ENDPOINT = 'https://api.quicksell.co/v1/internal/frontend-assignment';
 
 function App() {
@@ -67,12 +50,24 @@ function App() {
         (acc[user.name] = acc[user.name] || []).push(ticket);
         return acc;
       }, {});
+    } else if (grouping === 'priority') {
+      const priorityNames = ['No priority', 'Low', 'Medium', 'High', 'Urgent'];
+      return tickets.reduce((acc, ticket) => {
+        (acc[priorityNames[ticket.priority]] = acc[priorityNames[ticket.priority]] || []).push(ticket);
+        return acc;
+      }, {});
     }
   };
 
   const sortTickets = (ticketGroup) => {
     return Object.keys(ticketGroup).reduce((acc, key) => {
-      acc[key] = ticketGroup[key].sort((a, b) => b.priority - a.priority);
+      acc[key] = ticketGroup[key].sort((a, b) => {
+        if (ordering === 'priority') {
+          return b.priority - a.priority;
+        } else if (ordering === 'title') {
+          return a.title.localeCompare(b.title);
+        }
+      });
       return acc;
     }, {});
   };
@@ -81,42 +76,50 @@ function App() {
 
   return (
     <div className="app">
-      <h1>Kanban Board</h1>
-      <div className="dropdown-container">
-        <button className="dropdown-button" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
-          Display Options
-        </button>
-        {isDropdownOpen && (
-          <div className="dropdown-menu">
-            <div className="dropdown-item">
-              <span>Grouping:</span>
-              <select value={grouping} onChange={(e) => handleGroupingChange(e.target.value)}>
-                <option value="status">Status</option>
-                <option value="user">User</option>
-              </select>
+      <div className="header">
+        <div className="dropdown-container">
+          <button className="dropdown-button" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+            <span className="icon">☰</span> Display
+          </button>
+          {isDropdownOpen && (
+            <div className="dropdown-menu">
+              <div className="dropdown-item">
+                <span>Grouping</span>
+                <select value={grouping} onChange={(e) => handleGroupingChange(e.target.value)}>
+                  <option value="status">Status</option>
+                  <option value="user">User</option>
+                  <option value="priority">Priority</option>
+                </select>
+              </div>
+              <div className="dropdown-item">
+                <span>Ordering</span>
+                <select value={ordering} onChange={(e) => handleOrderingChange(e.target.value)}>
+                  <option value="priority">Priority</option>
+                  <option value="title">Title</option>
+                </select>
+              </div>
             </div>
-            <div className="dropdown-item">
-              <span>Ordering:</span>
-              <select value={ordering} onChange={(e) => handleOrderingChange(e.target.value)}>
-                <option value="priority">Priority</option>
-              </select>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
       <div className="board">
         {Object.entries(groupedAndSortedTickets).map(([group, tickets]) => (
           <div key={group} className="column">
-            <h2>{group}</h2>
+            <h2 className="column-header">
+              <span className="column-title">{group}</span>
+              <span className="ticket-count">{tickets.length}</span>
+            </h2>
             {tickets.map(ticket => (
               <div key={ticket.id} className="card">
                 <div className="card-header">
-                  <span>{ticket.id}</span>
-                  <span>{users.find(u => u.id === ticket.userId)?.name}</span>
+                  <span className="ticket-id">{ticket.id}</span>
+                  <span className="user-avatar">{users.find(u => u.id === ticket.userId)?.name[0]}</span>
                 </div>
-                <h3>{ticket.title}</h3>
+                <h3 className="ticket-title">{ticket.title}</h3>
                 <div className="card-footer">
-                  <span className="priority">Priority: {ticket.priority}</span>
+                  <span className="priority-indicator">
+                    {/* Add priority icon here */}
+                  </span>
                   <span className="tag">{ticket.tag[0]}</span>
                 </div>
               </div>
